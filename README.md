@@ -86,8 +86,11 @@ This mode serves as a code-first orchestration layer, enabling Claude to write, 
 [`Claude Composer`](https://github.com/possibilities/claude-composer) by [Mike Bannister](https://github.com/possibilities)  
 A tool that adds small enhancements to Claude Code.
 
-[`Claude Hub`](https://github.com/claude-did-this/claude-hub) by [Claude Did This](https://github.com/claude-did-this)  
+[`Claude Hub`](https://github.com/claude-did-this/claude-hub) by [Claude Did This](https://github.com/claude-did-this)
 A webhook service that connects Claude Code to GitHub repositories, enabling AI-powered code assistance directly through pull requests and issues. This integration allows Claude to analyze repositories, answer technical questions, and help developers understand and improve their codebase through simple @mentions.
+
+[`claude-notes`](https://github.com/vtemian/claude-notes) by [vtemian](https://github.com/vtemian)
+A CLI tool that transforms Claude Code transcript JSONL files into terminal-viewable output with syntax highlighting and standalone HTML files with styling and conversation structure.
 
 [`Claude Squad`](https://github.com/smtg-ai/claude-squad) by [smtg-ai](https://github.com/smtg-ai)  
 Claude Squad is a terminal app that manages multiple Claude Code, Codex (and other local agents including Aider) in separate workspaces, allowing you to work on multiple tasks simultaneously.
