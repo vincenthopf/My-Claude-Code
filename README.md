@@ -17,9 +17,14 @@ Personal collection of skills, commands, and configurations for [Claude Code](ht
 |-------|-------------|
 | **agent-browser** | Browser automation for web testing, form filling, screenshots, and data extraction |
 | **deep-research** | Deep research using Parallel.ai API with structured query formulation |
-| **huly-issues** | Full CRUD operations for Huly issue tracking and task management |
 | **skill-from-masters** | Framework for creating high-quality skills based on expert methodologies |
 | **skill-creator** | Guided skill generation with proper structure and validation |
+
+### Development Skills (`skills/dev/`)
+
+| Skill | Description |
+|-------|-------------|
+| **huly-issues** | Full CRUD operations for Huly issue tracking and task management |
 | **authentic-blog-writer** | Blog writing workflow |
 
 ## Installation
@@ -61,4 +66,4 @@ Some skills require additional setup:
 
 ## License
 
-MIT
+[CC BY-NC 4.0](LICENSE) - You may share and adapt with attribution. Commercial use requires prior consent.
