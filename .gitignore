@@ -1,20 +1,51 @@
-**/.claude/settings.local.json
+# Sensitive files - API keys, credentials
+.env
+*.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
 
-.myob/*
-.myob/scripts/*
-!.myob/
-!.myob/scripts/
-!.myob/scripts/validate_links.py
-!.myob/scripts/resource-metadata.csv
+# Node modules (can reinstall)
+**/node_modules/
 
-.mypy_cache/
+# Python cache
+**/__pycache__/
+*.pyc
 
-# Basically, this is in order to ignore everything in `.claude/` directory EXCEPT the `/add-new-resource` command. 
-.claude/*
-.claude/commands/*
-!CLAUDE.md
-!.claude/
-!.claude/commands/
-!.claude/commands/add-new-resource.md
+# Claude Code sensitive data
+history.jsonl
+settings.local.json
+stats-cache.json
 
+# Session and cache data
+session-env/
+shell-snapshots/
+cache/
+debug/
+file-history/
+paste-cache/
+todos/
+tasks/
+plans/
+projects/
+ide/
+telemetry/
+statsig/
+chrome/
+
+# Plugin caches (large, can reinstall)
+plugins/cache/
+plugins/install-counts-cache.json
+plugins/known_marketplaces.json
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

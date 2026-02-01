@@ -1,0 +1,12 @@
+{
+  "name": "huly-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Modular Huly API scripts",
+  "dependencies": {
+    "@hcengineering/api-client": "latest",
+    "@hcengineering/core": "^0.7.23",
+    "@hcengineering/tracker": "^0.7.0",
+    "dotenv": "^16.4.0"
+  }
+}
