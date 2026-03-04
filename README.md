@@ -26,6 +26,7 @@ Personal collection of skills, commands, and configurations for [Claude Code](ht
 | **deep-research** | Deep research using Parallel.ai API with structured query formulation |
 | **skill-from-masters** | Framework for creating high-quality skills based on expert methodologies |
 | **skill-creator** | Guided skill generation with proper structure and validation |
+| **[learnings](skills/learnings/)** | Hierarchical knowledge base with maturity pipeline — fixes earn trust through repetition: `[DRAFT]` → `[CONFIRMED]` or `[INVALIDATED]` → `[REGRESSION]` |
 
 ### Development Skills (`skills/dev/`)
 
