@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+#
+# say - Text-to-speech using edge-tts (Microsoft neural voices)
+#
+# Usage: say [--voice <voice>] [--session <id>] [--project <name>] [--cwd <path>] <text>
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VOICE=""
+TEXT=""
+SESSION_ID=""
+PROJECT=""
+CWD=""
+NOTIFY=true
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --voice)
+            VOICE="$2"
+            shift 2
+            ;;
+        --session)
+            SESSION_ID="$2"
+            shift 2
+            ;;
+        --project)
+            PROJECT="$2"
+            shift 2
+            ;;
+        --cwd)
+            CWD="$2"
+            shift 2
+            ;;
+        --no-notify)
+            NOTIFY=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: say [--voice <voice>] [--session <id>] [--project <name>] [--cwd <path>] <text>"
+            exit 0
+            ;;
+        *)
+            TEXT="$TEXT $1"
+            shift
+            ;;
+    esac
+done
+
+# Trim leading space
+TEXT="${TEXT## }"
+
+if [[ -z "$TEXT" ]]; then
+    echo "Error: No text provided" >&2
+    exit 1
+fi
+
+# Read config for voice and enabled status
+CONFIG_FILE="$HOME/.claude/voice.local.md"
+if [[ -f "$CONFIG_FILE" ]]; then
+    ENABLED=$(sed -n '/^---$/,/^---$/p' "$CONFIG_FILE" | grep "^enabled:" | sed 's/enabled:[[:space:]]*//')
+    if [[ "$ENABLED" == "false" ]]; then
+        exit 0
+    fi
+    if [[ -z "$VOICE" ]]; then
+        VOICE=$(sed -n '/^---$/,/^---$/p' "$CONFIG_FILE" | grep "^voice:" | sed 's/voice:[[:space:]]*//')
+    fi
+fi
+
+# Default voice
+VOICE="${VOICE:-en-AU-WilliamNeural}"
+
+# Strip markdown characters so TTS doesn't say "asterisk" etc.
+# Removes the formatting chars but keeps all words intact.
+TEXT=$(echo "$TEXT" | sed \
+    -e 's/\*//g' \
+    -e 's/_//g' \
+    -e 's/`//g' \
+    -e 's/^#\{1,6\}[[:space:]]*//' \
+)
+
+# Prepend project name to spoken text
+if [[ -n "$PROJECT" ]]; then
+    SPEAK_TEXT="In ${PROJECT}: ${TEXT}"
+else
+    SPEAK_TEXT="$TEXT"
+fi
+
+# Session state files
+if [[ -n "$SESSION_ID" ]]; then
+    SESSION_RUNNING="/tmp/voice-${SESSION_ID}-running"
+    SESSION_DONE="/tmp/voice-${SESSION_ID}-done"
+    SESSION_FAILED="/tmp/voice-${SESSION_ID}-failed"
+    echo $$ > "$SESSION_RUNNING"
+fi
+
+# Audio lock — prevents overlapping voices from multiple sessions
+LOCK_DIR="/tmp/voice-playback.lockdir"
+LOCK_PID_FILE="$LOCK_DIR/pid"
+
+is_lock_stale() {
+    if [[ ! -d "$LOCK_DIR" ]]; then
+        return 1
+    fi
+    if [[ ! -f "$LOCK_PID_FILE" ]]; then
+        return 0
+    fi
+    local lock_pid
+    lock_pid=$(cat "$LOCK_PID_FILE" 2>/dev/null)
+    if [[ -z "$lock_pid" ]]; then
+        return 0
+    fi
+    if ! kill -0 "$lock_pid" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+cleanup_stale_lock() {
+    rm -f "$LOCK_PID_FILE" 2>/dev/null
+    rmdir "$LOCK_DIR" 2>/dev/null
+}
+
+release_lock() {
+    rm -f "$LOCK_PID_FILE" 2>/dev/null
+    rmdir "$LOCK_DIR" 2>/dev/null
+}
+
+cleanup_on_interrupt() {
+    release_lock
+    [[ -n "$SESSION_RUNNING" ]] && rm -f "$SESSION_RUNNING"
+}
+
+mark_failed() {
+    if [[ -n "$SESSION_ID" ]]; then
+        touch "$SESSION_FAILED"
+        rm -f "$SESSION_RUNNING"
+    fi
+}
+
+# Acquire lock
+MAX_WAIT=30
+WAITED=0
+while ! mkdir "$LOCK_DIR" 2>/dev/null; do
+    if is_lock_stale; then
+        cleanup_stale_lock
+        continue
+    fi
+    sleep 0.2
+    WAITED=$((WAITED + 1))
+    if [[ $WAITED -ge $((MAX_WAIT * 5)) ]]; then
+        echo "Error: Timeout waiting for audio lock after ${MAX_WAIT}s" >&2
+        exit 1
+    fi
+done
+
+echo $$ > "$LOCK_PID_FILE"
+trap cleanup_on_interrupt INT TERM
+
+# Auto-kill: if this script runs longer than 60s, something is hung
+( sleep 60 && kill $$ 2>/dev/null ) &
+WATCHDOG_PID=$!
+trap 'kill $WATCHDOG_PID 2>/dev/null; cleanup_on_interrupt' INT TERM EXIT
+
+# Clean stale -running files older than 2 minutes
+find /tmp -maxdepth 1 -name 'voice-*-running' -mmin +2 -delete 2>/dev/null
+
+# Generate and stream audio via edge-tts + ffplay
+# Streams directly — audio starts playing as chunks arrive
+
+# Banner notification — fires before playback so both arrive simultaneously
+# Clicking the banner focuses the exact iTerm2 session via the notify script
+# Uses -group to replace previous notification for the same session
+ITERM_UUID="${ITERM_SESSION_ID##*:}"
+NOTIFY_TITLE="${PROJECT:+Steven — ${PROJECT}}"
+NOTIFY_TITLE="${NOTIFY_TITLE:-Steven}"
+
+# Shortened path as subtitle (~/…/last/two/parts)
+NOTIFY_SUBTITLE=""
+if [[ -n "$CWD" ]]; then
+    SHORT_PATH="${CWD/#$HOME/~}"
+    # Keep last 3 path components if path is deep
+    DEPTH=$(echo "$SHORT_PATH" | tr '/' '\n' | grep -c .)
+    if [[ $DEPTH -gt 4 ]]; then
+        LAST_PARTS=$(echo "$SHORT_PATH" | rev | cut -d'/' -f1-3 | rev)
+        SHORT_PATH="…/$LAST_PARTS"
+    fi
+    NOTIFY_SUBTITLE="$SHORT_PATH"
+fi
+
+# Group by iTerm session so new notifications replace old ones
+NOTIFY_GROUP="${ITERM_UUID:-${SESSION_ID:-default}}"
+
+if [[ "$NOTIFY" == true ]]; then
+    PYTHON3="$(which python3)"
+    if [[ -n "$ITERM_UUID" ]]; then
+        terminal-notifier \
+            -title "$NOTIFY_TITLE" \
+            -subtitle "$NOTIFY_SUBTITLE" \
+            -message "$TEXT" \
+            -group "$NOTIFY_GROUP" \
+            -execute "open -b com.googlecode.iterm2 && '${PYTHON3}' '${SCRIPT_DIR}/notify.py' '${ITERM_UUID}'" \
+            2>/dev/null &
+    else
+        terminal-notifier \
+            -title "$NOTIFY_TITLE" \
+            -subtitle "$NOTIFY_SUBTITLE" \
+            -message "$TEXT" \
+            -group "$NOTIFY_GROUP" \
+            -activate com.googlecode.iterm2 \
+            2>/dev/null &
+    fi
+fi
+
+edge-tts --voice "$VOICE" --text "$SPEAK_TEXT" --write-media - 2>/dev/null \
+    | ffplay -nodisp -autoexit -loglevel quiet -i pipe:0 2>/dev/null
+
+if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+    mark_failed
+    release_lock
+    exit 1
+fi
+
+# Release lock and mark done
+release_lock
+
+if [[ -n "$SESSION_ID" ]]; then
+    touch "$SESSION_DONE"
+    rm -f "$SESSION_RUNNING"
+fi
