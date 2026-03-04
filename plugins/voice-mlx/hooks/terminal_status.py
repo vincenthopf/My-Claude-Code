@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Terminal status — sets iTerm2 per-pane title via AppleScript.
+"""Terminal status — sets iTerm2 per-pane title and tab color via AppleScript.
 
 Uses osascript to communicate with iTerm2 via Apple Events. Generates
 quality titles via Inception Labs Mercury API (1000+ tok/sec diffusion LLM).
+Tab colors are set by writing escape sequences directly to the TTY device.
 """
 
 import json
@@ -17,6 +18,15 @@ STATE_DIR = Path.home() / ".claude" / "terminal_status"
 
 MERCURY_API_URL = "https://api.inceptionlabs.ai/v1/chat/completions"
 MERCURY_MODEL = "mercury-2"
+
+# Tab colors by status (6-digit hex, no #)
+STATUS_COLORS = {
+    "WORKING...": "1a73e8",   # Blue
+    "DONE": "34a853",         # Green
+    "PERMISSION": "ea4335",   # Red
+    "QUESTION": "f9ab00",     # Yellow
+    "ATTENTION": "fa7b17",    # Orange
+}
 
 
 def _get_mercury_key() -> str | None:
@@ -64,35 +74,38 @@ def _generate_title(text: str, instruction: str) -> str | None:
             title = title.strip('"\'').strip()
             # Take first line only, cap length
             title = title.split("\n")[0].strip()
-            if len(title) > 50:
-                title = title[:50]
+            if len(title) > 70:
+                title = title[:70]
             return title if title else None
     except Exception:
         return None
 
 
 def generate_working_title(prompt: str) -> str:
-    """Generate a quality title from a user prompt via Mercury, with fallback."""
+    """Generate a descriptive title from a user prompt via Mercury, with fallback."""
     title = _generate_title(
         prompt,
-        "Generate a 4-6 word action title for this task. "
-        "Format: Action: Subject. Examples: 'Debug: Auth API Flow', "
-        "'Build: User Dashboard', 'Fix: Login Bug'. "
+        "Generate a concise but descriptive title (6-12 words) for this task. "
+        "It should tell someone at a glance exactly what is being worked on. "
+        "Examples: 'Adding voice plugin to My-Claude-Code GitHub repo', "
+        "'Fixing auth token refresh in login API endpoint', "
+        "'Researching iTerm2 tab color escape sequences'. "
         "Reply with ONLY the title, nothing else."
     )
-    return title or _extract_summary_fallback(prompt)
+    return title or _extract_summary_fallback(prompt, max_words=8)
 
 
 def generate_done_title(response: str) -> str:
-    """Generate a completion summary from Claude's response via Mercury, with fallback."""
+    """Generate a descriptive completion summary via Mercury, with fallback."""
     title = _generate_title(
         response,
-        "Summarise what was completed in 4-6 words. "
-        "Format: Past Action: Subject. Examples: 'Fixed: Login Bug', "
-        "'Built: Dashboard Component', 'Debugged: API Timeout'. "
+        "Summarise what was completed in 6-12 words. Be specific about what changed. "
+        "Examples: 'Added tab color support to terminal status hooks', "
+        "'Fixed markdown stripping in TTS say script', "
+        "'Pushed voice-mlx plugin to feature branch on GitHub'. "
         "Reply with ONLY the title, nothing else."
     )
-    return title or _extract_summary_fallback(response)
+    return title or _extract_summary_fallback(response, max_words=8)
 
 
 def _extract_summary_fallback(text: str, max_words: int = 4) -> str:
@@ -174,6 +187,17 @@ end tell
         return False
 
 
+def _set_tab_color(tty: str, hex_color: str) -> None:
+    """Set iTerm2 tab color by writing escape sequence directly to TTY."""
+    try:
+        seq = f"\033]1337;SetColors=tab={hex_color}\a"
+        fd = os.open(tty, os.O_WRONLY | os.O_NOCTTY)
+        os.write(fd, seq.encode())
+        os.close(fd)
+    except Exception:
+        pass
+
+
 def _load_state(session_id: str) -> dict:
     cache_file = STATE_DIR / f"{session_id or 'default'}.json"
     if cache_file.exists():
@@ -213,8 +237,13 @@ def update_status(
         state = _load_state(session_id)
         summary = state.get("summary", "")
 
-    pane_title = f"{status} | {summary}" if summary else status
+    pane_title = f"{summary}" if summary else status
     _set_pane_title(tty, pane_title)
+
+    # Set tab color based on status
+    color = STATUS_COLORS.get(status)
+    if color:
+        _set_tab_color(tty, color)
 
     if summary:
         _save_state(session_id, summary=summary, tty=tty)
