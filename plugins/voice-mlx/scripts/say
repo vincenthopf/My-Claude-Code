@@ -127,12 +127,49 @@ release_lock() {
     rmdir "$LOCK_DIR" 2>/dev/null
 }
 
+restore_volume_instant() {
+    if [[ -n "$FADE_PID" ]]; then
+        kill "$FADE_PID" 2>/dev/null || true
+        wait "$FADE_PID" 2>/dev/null || true
+        FADE_PID=""
+    fi
+    if [[ -n "$ORIGINAL_VOLUME" ]]; then
+        osascript -e "set volume output volume $ORIGINAL_VOLUME" 2>/dev/null
+        ORIGINAL_VOLUME=""
+    fi
+}
+
+restore_volume_smooth() {
+    if [[ -n "$FADE_PID" ]]; then
+        kill "$FADE_PID" 2>/dev/null || true
+        wait "$FADE_PID" 2>/dev/null || true
+        FADE_PID=""
+    fi
+    if [[ -n "$ORIGINAL_VOLUME" ]]; then
+        local target="$ORIGINAL_VOLUME"
+        ORIGINAL_VOLUME=""
+        local current
+        current=$(osascript -e 'output volume of (get volume settings)' 2>/dev/null || echo "$target")
+        local step=$(( (target - current) / 4 ))
+        if [[ $step -lt 1 ]]; then step=1; fi
+        local vol=$current
+        for i in 1 2 3; do
+            vol=$(( vol + step ))
+            osascript -e "set volume output volume $vol" 2>/dev/null || true
+            sleep 0.15
+        done
+        osascript -e "set volume output volume $target" 2>/dev/null || true
+    fi
+}
+
 cleanup_on_interrupt() {
+    restore_volume_instant
     release_lock
-    [[ -n "$SESSION_RUNNING" ]] && rm -f "$SESSION_RUNNING"
+    [[ -n "$SESSION_RUNNING" ]] && rm -f "$SESSION_RUNNING" || true
 }
 
 mark_failed() {
+    restore_volume_instant
     if [[ -n "$SESSION_ID" ]]; then
         touch "$SESSION_FAILED"
         rm -f "$SESSION_RUNNING"
@@ -161,10 +198,10 @@ trap cleanup_on_interrupt INT TERM
 # Auto-kill: if this script runs longer than 60s, something is hung
 ( sleep 60 && kill $$ 2>/dev/null ) &
 WATCHDOG_PID=$!
-trap 'kill $WATCHDOG_PID 2>/dev/null; cleanup_on_interrupt' INT TERM EXIT
+trap 'kill $WATCHDOG_PID 2>/dev/null || true; pkill -P $$ 2>/dev/null || true; cleanup_on_interrupt' INT TERM EXIT
 
 # Clean stale -running files older than 2 minutes
-find /tmp -maxdepth 1 -name 'voice-*-running' -mmin +2 -delete 2>/dev/null
+find /tmp -maxdepth 1 -name 'voice-*-running' -mmin +2 -delete 2>/dev/null || true
 
 # Generate and stream audio via edge-tts + ffplay
 # Streams directly — audio starts playing as chunks arrive
@@ -213,16 +250,47 @@ if [[ "$NOTIFY" == true ]] && command -v terminal-notifier &>/dev/null; then
     fi
 fi
 
+# Audio ducking — smooth graduated fade runs in the background
+# The fade happens during edge-tts generation time, adding zero latency
+ORIGINAL_VOLUME=""
+FADE_PID=""
+CURRENT_VOL=$(osascript -e 'output volume of (get volume settings)' 2>/dev/null || true)
+if [[ -n "$CURRENT_VOL" && "$CURRENT_VOL" -gt 0 ]] 2>/dev/null; then
+    ORIGINAL_VOLUME="$CURRENT_VOL"
+    DUCKED_VOL=$(( CURRENT_VOL * 50 / 100 ))
+    # 4-step graduated fade over ~0.6s, runs concurrently with TTS generation
+    STEP=$(( (CURRENT_VOL - DUCKED_VOL) / 4 ))
+    if [[ $STEP -lt 1 ]]; then STEP=1; fi
+    (
+        vol=$CURRENT_VOL
+        for i in 1 2 3; do
+            vol=$(( vol - STEP ))
+            osascript -e "set volume output volume $vol" 2>/dev/null
+            sleep 0.15
+        done
+        # Final step lands exactly on target
+        osascript -e "set volume output volume $DUCKED_VOL" 2>/dev/null
+    ) &
+    FADE_PID=$!
+fi
+
+set +e
 edge-tts --voice "$VOICE" --text "$SPEAK_TEXT" --write-media - 2>/dev/null \
     | ffplay -nodisp -autoexit -loglevel quiet -i pipe:0 2>/dev/null
+EDGE_STATUS=${PIPESTATUS[0]}
+PLAY_STATUS=${PIPESTATUS[1]}
+set -e
 
-if [[ ${PIPESTATUS[0]} -ne 0 || ${PIPESTATUS[1]} -ne 0 ]]; then
+if [[ $EDGE_STATUS -ne 0 || $PLAY_STATUS -ne 0 ]]; then
+    # Fallback to macOS built-in TTS
+    /usr/bin/say "$SPEAK_TEXT" 2>/dev/null || true
     mark_failed
     release_lock
     exit 1
 fi
 
-# Release lock and mark done
+# Restore volume and release lock
+restore_volume_smooth
 release_lock
 
 if [[ -n "$SESSION_ID" ]]; then

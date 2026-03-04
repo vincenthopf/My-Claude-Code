@@ -8,8 +8,10 @@ Tab colors are set by writing escape sequences directly to the TTY device.
 
 import json
 import os
+import random
 import re
 import subprocess
+import time
 import urllib.request
 from pathlib import Path
 
@@ -215,6 +217,14 @@ def _load_state(session_id: str) -> dict:
 
 
 def _save_state(session_id: str, summary: str = "", tty: str = "") -> None:
+    if random.random() < 0.1 and STATE_DIR.exists():
+        cutoff = time.time() - 86400
+        for f in STATE_DIR.iterdir():
+            try:
+                if f.suffix == '.json' and f.stat().st_mtime < cutoff:
+                    f.unlink(missing_ok=True)
+            except Exception:
+                pass
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     try:
         STATE_DIR.chmod(0o700)
