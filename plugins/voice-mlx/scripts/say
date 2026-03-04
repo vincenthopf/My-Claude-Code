@@ -192,16 +192,16 @@ fi
 # Group by iTerm session so new notifications replace old ones
 NOTIFY_GROUP="${ITERM_UUID:-${SESSION_ID:-default}}"
 
-if [[ "$NOTIFY" == true ]]; then
-    PYTHON3="$(which python3)"
-    if [[ -n "$ITERM_UUID" ]]; then
+if [[ "$NOTIFY" == true ]] && command -v terminal-notifier &>/dev/null; then
+    PYTHON3="$(command -v python3 || true)"
+    if [[ -n "$ITERM_UUID" && -n "$PYTHON3" ]]; then
         terminal-notifier \
             -title "$NOTIFY_TITLE" \
             -subtitle "$NOTIFY_SUBTITLE" \
             -message "$TEXT" \
             -group "$NOTIFY_GROUP" \
             -execute "open -b com.googlecode.iterm2 && '${PYTHON3}' '${SCRIPT_DIR}/notify.py' '${ITERM_UUID}'" \
-            2>/dev/null &
+            2>/dev/null & true
     else
         terminal-notifier \
             -title "$NOTIFY_TITLE" \
@@ -209,14 +209,14 @@ if [[ "$NOTIFY" == true ]]; then
             -message "$TEXT" \
             -group "$NOTIFY_GROUP" \
             -activate com.googlecode.iterm2 \
-            2>/dev/null &
+            2>/dev/null & true
     fi
 fi
 
 edge-tts --voice "$VOICE" --text "$SPEAK_TEXT" --write-media - 2>/dev/null \
     | ffplay -nodisp -autoexit -loglevel quiet -i pipe:0 2>/dev/null
 
-if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+if [[ ${PIPESTATUS[0]} -ne 0 || ${PIPESTATUS[1]} -ne 0 ]]; then
     mark_failed
     release_lock
     exit 1

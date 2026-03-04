@@ -77,11 +77,14 @@ def extract_tool_detail(notification_type: str, title: str,
 
 
 def speak_notification(project: str, message: str, voice: str,
-                       cwd: str = "", notifications: bool = True) -> None:
+                       cwd: str = "", notifications: bool = True,
+                       session_id: str = "") -> None:
     """Call the say script to speak the notification."""
     say_script = PLUGIN_ROOT / "scripts" / "say"
 
     args = [str(say_script), "--voice", voice]
+    if session_id:
+        args.extend(["--session", session_id])
     if project:
         args.extend(["--project", project])
     if cwd:
@@ -140,7 +143,7 @@ def main():
     if not spoken:
         exit(0)
 
-    speak_notification(project, spoken, voice, cwd, notifications)
+    speak_notification(project, spoken, voice, cwd, notifications, session_id)
 
 
 if __name__ == "__main__":

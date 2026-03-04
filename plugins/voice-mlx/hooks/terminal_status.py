@@ -11,7 +11,6 @@ import os
 import re
 import subprocess
 import urllib.request
-import urllib.error
 from pathlib import Path
 
 STATE_DIR = Path.home() / ".claude" / "terminal_status"
@@ -36,7 +35,10 @@ def _get_mercury_key() -> str | None:
         return key
     key_file = Path.home() / ".claude" / "inception_api_key"
     if key_file.exists():
-        return key_file.read_text().strip()
+        try:
+            return key_file.read_text().strip()
+        except OSError:
+            return None
     return None
 
 
@@ -124,8 +126,6 @@ def _extract_summary_fallback(text: str, max_words: int = 4) -> str:
     return " ".join(w.capitalize() for w in meaningful) if meaningful else "Working"
 
 
-# Keep old name as alias for backward compatibility
-extract_summary = _extract_summary_fallback
 
 
 def _find_tty() -> str | None:
@@ -189,13 +189,19 @@ end tell
 
 def _set_tab_color(tty: str, hex_color: str) -> None:
     """Set iTerm2 tab color by writing escape sequence directly to TTY."""
+    fd = None
     try:
         seq = f"\033]1337;SetColors=tab={hex_color}\a"
         fd = os.open(tty, os.O_WRONLY | os.O_NOCTTY)
         os.write(fd, seq.encode())
-        os.close(fd)
     except Exception:
         pass
+    finally:
+        if fd is not None:
+            try:
+                os.close(fd)
+            except Exception:
+                pass
 
 
 def _load_state(session_id: str) -> dict:
@@ -210,6 +216,10 @@ def _load_state(session_id: str) -> dict:
 
 def _save_state(session_id: str, summary: str = "", tty: str = "") -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        STATE_DIR.chmod(0o700)
+    except OSError:
+        pass
     cache_file = STATE_DIR / f"{session_id or 'default'}.json"
     data = _load_state(session_id)
     if summary:
@@ -218,6 +228,7 @@ def _save_state(session_id: str, summary: str = "", tty: str = "") -> None:
         data["tty"] = tty
     try:
         cache_file.write_text(json.dumps(data))
+        cache_file.chmod(0o600)
     except Exception:
         pass
 

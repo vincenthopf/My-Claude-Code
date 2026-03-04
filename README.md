@@ -44,6 +44,9 @@ cp -r skills/agent-browser ~/.claude/skills/
 
 # Or symlink for easier updates
 ln -s $(pwd)/skills/agent-browser ~/.claude/skills/agent-browser
+
+# Install a plugin
+cp -r plugins/voice-mlx ~/.claude/plugins/custom/voice-mlx
 ```
 
 ## Commands

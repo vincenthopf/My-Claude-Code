@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Stop hook - extract voice summary, then speak it.
+Stop hook - update terminal status and speak voice summary.
 
-Flow (all instant, no API calls):
-1. Look for 📢 marker in last_assistant_message
-2. If short response (≤25 words), speak directly
-3. Last resort: truncate to first sentence or 25 words
+Flow:
+1. Generate completion title via Mercury API (with local fallback)
+2. Look for 📢 marker in last_assistant_message
+3. If short response (≤25 words), speak directly
+4. Last resort: truncate to first sentence or 25 words
 """
 
 import json

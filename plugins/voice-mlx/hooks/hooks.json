@@ -8,7 +8,7 @@
           {
             "type": "command",
             "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/user_prompt_submit_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/user_prompt_submit_hook.py\"; else echo \"{\\\"decision\\\":\\\"approve\\\"}\"; fi'",
-            "timeout": 5
+            "timeout": 15
           }
         ]
       }

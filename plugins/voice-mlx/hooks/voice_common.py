@@ -66,7 +66,10 @@ def get_voice_config() -> tuple[bool, str, str, bool, bool]:
     if not config_file.exists():
         return True, "en-AU-WilliamNeural", "", False, True
 
-    content = config_file.read_text()
+    try:
+        content = config_file.read_text()
+    except OSError:
+        return True, "en-AU-WilliamNeural", "", False, True
 
     enabled = True
     voice = "en-AU-WilliamNeural"
@@ -112,7 +115,11 @@ def clear_just_disabled_flag() -> None:
     if not config_file.exists():
         return
 
-    content = config_file.read_text()
+    try:
+        content = config_file.read_text()
+    except OSError:
+        return
+
     lines = content.split("\n")
     new_lines = []
     in_frontmatter = False
@@ -126,7 +133,10 @@ def clear_just_disabled_flag() -> None:
             continue
         new_lines.append(line)
 
-    config_file.write_text("\n".join(new_lines))
+    try:
+        config_file.write_text("\n".join(new_lines))
+    except OSError:
+        return
 
 
 def build_full_reminder(custom_prompt: str = "") -> str:

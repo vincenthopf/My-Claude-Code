@@ -88,4 +88,4 @@ prompt: "keep summaries casual"
 | Notification (question) | `QUESTION` | Sets title, speaks the question |
 | Notification (idle) | — | Preserves previous status (agents may still run) |
 
-Title format: `STATUS | Summary` (e.g., `WORKING... | Debug: Auth API Flow`)
+Title shows the summary text (e.g., `Debug auth token refresh in login API`). Status is conveyed via tab color: blue = working, green = done, red = permission, yellow = question, orange = attention.
