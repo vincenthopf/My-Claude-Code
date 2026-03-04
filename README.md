@@ -6,10 +6,17 @@ Personal collection of skills, commands, and configurations for [Claude Code](ht
 
 ```
 .
+├── plugins/          # Full plugins with hooks, scripts, and commands
 ├── skills/           # Custom skills extending Claude Code capabilities
 ├── commands/         # Slash commands for common workflows
 └── settings.json     # Claude Code configuration
 ```
+
+## Plugins
+
+| Plugin | Description |
+|--------|-------------|
+| **[voice-mlx](plugins/voice-mlx/)** | Voice notifications and iTerm2 terminal status — speaks summaries, sets per-pane status titles, macOS banner alerts |
 
 ## Skills
 
@@ -37,6 +44,9 @@ cp -r skills/agent-browser ~/.claude/skills/
 
 # Or symlink for easier updates
 ln -s $(pwd)/skills/agent-browser ~/.claude/skills/agent-browser
+
+# Install a plugin
+cp -r plugins/voice-mlx ~/.claude/plugins/custom/voice-mlx
 ```
 
 ## Commands
@@ -53,8 +63,9 @@ The `settings.json` contains my preferred Claude Code configuration:
 
 ## Requirements
 
-Some skills require additional setup:
+Some skills and plugins require additional setup:
 
+- **voice-mlx**: Requires `edge-tts`, `ffplay`, `terminal-notifier` — see [plugin README](plugins/voice-mlx/)
 - **deep-research**: Requires `PARALLEL_API_KEY` environment variable
 - **huly-issues**: Requires Huly credentials in `.env` file
 - **agent-browser**: Requires [agent-browser](https://github.com/anthropics/agent-browser) CLI installed

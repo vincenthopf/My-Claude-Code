@@ -1,0 +1,8 @@
+{
+  "name": "voice-mlx",
+  "version": "1.0.0",
+  "description": "Voice notifications for Claude Code using edge-tts with macOS banner alerts and click-to-focus",
+  "author": {
+    "name": "vincenthopf"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "description": "Voice hooks - spoken summaries, attention notifications, and project-aware banner alerts",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/user_prompt_submit_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/user_prompt_submit_hook.py\"; else echo \"{\\\"decision\\\":\\\"approve\\\"}\"; fi'",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use_hook.py\"; else echo \"{\\\"decision\\\":\\\"approve\\\"}\"; fi'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_hook.py\"; else echo \"{\\\"decision\\\":\\\"approve\\\"}\"; fi'",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; else exit 0; fi'",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; else exit 0; fi'",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "elicitation_dialog",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; else exit 0; fi'",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "worker_permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/notification_hook.py\"; else exit 0; fi'",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
