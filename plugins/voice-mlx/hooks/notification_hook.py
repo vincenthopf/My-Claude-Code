@@ -7,16 +7,13 @@ Uses instant pattern matching (no API calls) for maximum speed.
 
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from voice_common import get_voice_config, detect_project_name
+from voice_common import get_voice_config, detect_project_name, speak
 from terminal_status import update_status
-
-PLUGIN_ROOT = Path(__file__).parent.parent
 
 FALLBACK_MESSAGES = {
     "permission_prompt": "The agent needs your permission.",
@@ -76,33 +73,6 @@ def extract_tool_detail(notification_type: str, title: str,
     return FALLBACK_MESSAGES.get(notification_type, "The agent needs attention.")
 
 
-def speak_notification(project: str, message: str, voice: str,
-                       cwd: str = "", notifications: bool = True,
-                       session_id: str = "") -> None:
-    """Call the say script to speak the notification."""
-    say_script = PLUGIN_ROOT / "scripts" / "say"
-
-    args = [str(say_script), "--voice", voice]
-    if session_id:
-        args.extend(["--session", session_id])
-    if project:
-        args.extend(["--project", project])
-    if cwd:
-        args.extend(["--cwd", cwd])
-    if not notifications:
-        args.append("--no-notify")
-    args.append(message)
-
-    try:
-        subprocess.Popen(
-            args,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    except Exception:
-        pass
-
-
 def main():
     try:
         data = json.load(sys.stdin)
@@ -143,7 +113,7 @@ def main():
     if not spoken:
         exit(0)
 
-    speak_notification(project, spoken, voice, cwd, notifications, session_id)
+    speak(spoken, voice, session_id=session_id, project=project, cwd=cwd, notifications=notifications)
 
 
 if __name__ == "__main__":

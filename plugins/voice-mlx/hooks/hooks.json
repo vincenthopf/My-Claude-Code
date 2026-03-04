@@ -13,18 +13,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'if test -f \"${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use_hook.py\"; then python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use_hook.py\"; else echo \"{\\\"decision\\\":\\\"approve\\\"}\"; fi'",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "matcher": "*",

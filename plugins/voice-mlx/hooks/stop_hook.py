@@ -11,16 +11,13 @@ Flow:
 
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from voice_common import MAX_SPOKEN_WORDS, get_voice_config, detect_project_name
+from voice_common import MAX_SPOKEN_WORDS, get_voice_config, detect_project_name, speak
 from terminal_status import update_status, generate_done_title
-
-PLUGIN_ROOT = Path(__file__).parent.parent
 
 # Flexible limit for explicit summaries (1.5x the strict limit)
 FLEXIBLE_LIMIT = int(MAX_SPOKEN_WORDS * 1.5)
@@ -68,35 +65,6 @@ def is_short_response(text: str) -> bool:
     return len(text.split()) <= MAX_SPOKEN_WORDS
 
 
-def speak_summary(session_id: str, summary: str, voice: str,
-                   project: str = "", cwd: str = "",
-                   notifications: bool = True) -> None:
-    """Call the say script to speak the summary (runs in background)."""
-    say_script = PLUGIN_ROOT / "scripts" / "say"
-
-    args = [
-        str(say_script),
-        "--session", session_id,
-        "--voice", voice,
-    ]
-    if project:
-        args.extend(["--project", project])
-    if cwd:
-        args.extend(["--cwd", cwd])
-    if not notifications:
-        args.append("--no-notify")
-    args.append(summary)
-
-    try:
-        subprocess.Popen(
-            args,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    except Exception:
-        pass
-
-
 def main():
     try:
         data = json.load(sys.stdin)
@@ -141,7 +109,7 @@ def main():
     if not summary:
         summary = extract_first_sentence(last_assistant_msg)
 
-    speak_summary(session_id, summary, voice, project, cwd, notifications)
+    speak(summary, voice, session_id=session_id, project=project, cwd=cwd, notifications=notifications)
 
     print(json.dumps({"decision": "approve"}))
 

@@ -3,6 +3,7 @@
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 # Word limit for short response detection and fallback truncation.
@@ -154,6 +155,21 @@ def build_full_reminder(custom_prompt: str = "") -> str:
     return reminder
 
 
-def build_short_reminder() -> str:
-    """Build a brief voice reminder for PostToolUse hook."""
-    return ""
+def speak(message: str, voice: str, session_id: str = "",
+          project: str = "", cwd: str = "", notifications: bool = True) -> None:
+    """Shared function to call the say script for TTS."""
+    say_script = Path(__file__).parent.parent / "scripts" / "say"
+    args = [str(say_script), "--voice", voice]
+    if session_id:
+        args.extend(["--session", session_id])
+    if project:
+        args.extend(["--project", project])
+    if cwd:
+        args.extend(["--cwd", cwd])
+    if not notifications:
+        args.append("--no-notify")
+    args.append(message)
+    try:
+        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        pass
