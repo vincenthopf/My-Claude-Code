@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from voice_common import get_voice_config, detect_project_name
+from voice_common import get_voice_config, detect_project_name, is_in_voice_call
 from terminal_status import update_status
 
 PLUGIN_ROOT = Path(__file__).parent.parent
@@ -133,7 +133,7 @@ def main():
 
     # Voice notification (only if voice enabled)
     enabled, voice, _custom_prompt, _just_disabled, notifications = get_voice_config()
-    if not enabled:
+    if not enabled or is_in_voice_call():
         exit(0)
 
     project = detect_project_name(cwd) if cwd else ""

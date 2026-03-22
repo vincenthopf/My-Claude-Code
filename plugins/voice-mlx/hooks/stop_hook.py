@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from voice_common import MAX_SPOKEN_WORDS, get_voice_config, detect_project_name
+from voice_common import MAX_SPOKEN_WORDS, get_voice_config, detect_project_name, is_in_voice_call
 from terminal_status import update_status, generate_done_title
 
 PLUGIN_ROOT = Path(__file__).parent.parent
@@ -120,7 +120,7 @@ def main():
         return
 
     enabled, voice, _custom_prompt, _just_disabled, notifications = get_voice_config()
-    if not enabled or not last_assistant_msg:
+    if not enabled or not last_assistant_msg or is_in_voice_call():
         print(json.dumps({"decision": "approve"}))
         return
 

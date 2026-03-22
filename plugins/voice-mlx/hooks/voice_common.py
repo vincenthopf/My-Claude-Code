@@ -3,6 +3,7 @@
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 # Word limit for short response detection and fallback truncation.
@@ -137,6 +138,30 @@ def clear_just_disabled_flag() -> None:
         config_file.write_text("\n".join(new_lines))
     except OSError:
         return
+
+
+def is_in_voice_call() -> bool:
+    """Check if any audio input device is actively capturing on macOS.
+
+    Uses a compiled Swift tool that queries CoreAudio's
+    kAudioDevicePropertyDeviceIsRunningSomewhere — the same signal
+    that drives the orange dot in the macOS menu bar.
+
+    This catches all calls (Discord, Zoom, Teams, FaceTime, etc.)
+    without needing app-specific detection logic.
+
+    Returns False on any error to avoid blocking TTS unnecessarily.
+    """
+    mic_check = Path(__file__).parent.parent / "scripts" / "mic_check"
+    if not mic_check.exists():
+        return False
+    try:
+        result = subprocess.run(
+            [str(mic_check)], capture_output=True, timeout=3,
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, OSError):
+        return False
 
 
 def build_full_reminder(custom_prompt: str = "") -> str:

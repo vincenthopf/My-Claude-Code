@@ -39,6 +39,9 @@ plugins/cache/
 plugins/install-counts-cache.json
 plugins/known_marketplaces.json
 
+# Compiled binaries (rebuild from source)
+plugins/voice-mlx/scripts/mic_check
+
 # OS files
 .DS_Store
 Thumbs.db
