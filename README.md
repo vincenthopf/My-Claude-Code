@@ -1,81 +1,106 @@
-# My Claude Code Workflows
+# My Claude Code
 
-Personal collection of skills, commands, and configurations for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+Personal collection of workflows, skills, plugins, and configurations for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
 ## Structure
 
 ```
 .
-├── plugins/          # Full plugins with hooks, scripts, and commands
-├── skills/           # Custom skills extending Claude Code capabilities
-├── commands/         # Slash commands for common workflows
-└── settings.json     # Claude Code configuration
+├── workflow/             # Five-stage development workflow system
+│   ├── CLAUDE.md         # Entry point — workflow stages + principles reference
+│   ├── principles.md     # Global principles governing all decisions
+│   ├── agents/           # 8 specialized agents (critics, synthesizers, verifiers)
+│   └── skills/           # 5 workflow skills (problem-def, design, planning, impl, debug)
+├── skills/               # Standalone skills (not part of the workflow)
+├── plugins/              # Full plugins with hooks, scripts, and commands
+├── commands/             # Slash commands for common workflows
+└── settings.json         # Claude Code configuration
 ```
+
+## Workflow System
+
+A five-stage, multi-model development pipeline. Problems are defined before solutions are proposed. Proposals are generated competitively and verified against principles, not documents.
+
+| Stage | Skill | What It Does |
+|-------|-------|-------------|
+| 1. Problem Definition | `/problem-definition` | Frame the problem. Three review agents attack the framing in parallel. |
+| 2. Design | `/design` | Explore solution space. Codex X-High evaluates approaches. User picks direction. |
+| 3. Planning | `/planning` | Two Codex High agents propose independently. Opus synthesizes. User approves. |
+| 4. Implementation | `/implementation` | Sub-agents build in parallel. Opus verifies each against problem + principles. |
+| 5. Debugging | `/debugging` | RCA → dual proposal (Opus + Codex) → synthesis → alignment → implement. |
+
+### Model Routing
+
+| Role | Model | Why |
+|------|-------|-----|
+| Research validation | Codex X-High (via pi) | Analytical rigor, gap detection |
+| Approach evaluation | Codex X-High (via pi) | Tradeoff analysis |
+| Proposal generation | Codex High x2 (via pi) | Strategy across problem space |
+| Synthesis & alignment | Opus | Intent understanding, judgment |
+| Verification | Opus | Divergence evaluation |
+| Implementation | Claude sub-agents | Tool access, codebase interaction |
+
+### Agents
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `definition-critic` | Opus | Attacks problem definitions |
+| `context-analyst` | Opus | Maps landscape around a problem |
+| `assumptions-auditor` | Opus | Surfaces invisible assumptions |
+| `proposal-synthesizer` | Opus | Selects best proposal, justifies choices |
+| `research-validator` | Codex X-High | Evaluates research quality, directs follow-up |
+| `approach-evaluator` | Codex X-High | Compares solution approaches rigorously |
+| `build-verifier` | Opus | Runs tests, generates adversarial cases, gates on execution |
+| `integration-checker` | Opus | Verifies parallel-built pieces fit together |
+
+### Key Design Decisions
+
+- **Proposal as compass, not contract.** Implementation agents have latitude. Verify against the problem, not the document.
+- **Select, don't merge.** The synthesizer picks the better proposal as a base. Merging is the exception.
+- **Verify by executing.** Build verification runs tests and generates adversarial cases. Code review alone is rubber-stamping.
+- **Scope through context, not personas.** Agent quality comes from controlling what context they receive, not from elaborate role descriptions.
+
+## Standalone Skills
+
+| Skill | Description |
+|-------|-------------|
+| **agent-browser** | Browser automation for web testing, form filling, screenshots |
+| **deep-research** | Deep research using Parallel.ai API |
+| **pi-agent** | Dispatch tasks to pi coding agent for cross-model work |
+| **skill-creator** | Guided skill generation with validation |
+| **skill-from-masters** | Create skills based on expert methodologies |
+| **learnings** | Knowledge base with maturity pipeline: `[DRAFT]` → `[CONFIRMED]` → `[REGRESSION]` |
+| **yt-transcribe** | YouTube transcription with smart model routing |
 
 ## Plugins
 
 | Plugin | Description |
 |--------|-------------|
-| **[voice-mlx](plugins/voice-mlx/)** | Voice notifications and iTerm2 terminal status — speaks summaries, sets per-pane status titles, macOS banner alerts |
-
-## Skills
-
-| Skill | Description |
-|-------|-------------|
-| **agent-browser** | Browser automation for web testing, form filling, screenshots, and data extraction |
-| **deep-research** | Deep research using Parallel.ai API with structured query formulation |
-| **skill-from-masters** | Framework for creating high-quality skills based on expert methodologies |
-| **skill-creator** | Guided skill generation with proper structure and validation |
-| **[learnings](skills/learnings/)** | Hierarchical knowledge base with maturity pipeline — fixes earn trust through repetition: `[DRAFT]` → `[CONFIRMED]` or `[INVALIDATED]` → `[REGRESSION]` |
-
-### Development Skills (`skills/dev/`)
-
-| Skill | Description |
-|-------|-------------|
-| **huly-issues** | Full CRUD operations for Huly issue tracking and task management |
-| **authentic-blog-writer** | Blog writing workflow |
+| **[voice-mlx](plugins/voice-mlx/)** | Voice notifications, iTerm2 status, macOS alerts |
 
 ## Installation
 
-To use these skills in your Claude Code setup:
-
 ```bash
-# Copy a skill to your Claude Code skills directory
-cp -r skills/agent-browser ~/.claude/skills/
+# Copy the workflow system
+cp workflow/CLAUDE.md ~/.claude/CLAUDE.md
+cp workflow/principles.md ~/.claude/principles.md
+cp -r workflow/agents/* ~/.claude/agents/
+cp -r workflow/skills/* ~/.claude/skills/
 
-# Or symlink for easier updates
-ln -s $(pwd)/skills/agent-browser ~/.claude/skills/agent-browser
+# Copy a standalone skill
+cp -r skills/agent-browser ~/.claude/skills/
 
 # Install a plugin
 cp -r plugins/voice-mlx ~/.claude/plugins/custom/voice-mlx
 ```
 
-## Commands
-
-Custom slash commands available via `/command-name`:
-
-- `/research` - Invoke deep research workflow
-
-## Configuration
-
-The `settings.json` contains my preferred Claude Code configuration:
-- Default model: `opus`
-- Default mode: `plan` (requires approval before implementation)
-
 ## Requirements
 
-Some skills and plugins require additional setup:
-
-- **voice-mlx**: Requires `edge-tts`, `ffplay`, `terminal-notifier` — see [plugin README](plugins/voice-mlx/)
-- **deep-research**: Requires `PARALLEL_API_KEY` environment variable
-- **huly-issues**: Requires Huly credentials in `.env` file
-- **agent-browser**: Requires [agent-browser](https://github.com/anthropics/agent-browser) CLI installed
-
-## Resources
-
-- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
-- [Claude Code GitHub](https://github.com/anthropics/claude-code)
+- **Workflow system**: Requires pi CLI (`npm install -g @mariozechner/pi-coding-agent`) for cross-model dispatch
+- **deep-research**: Requires `PARALLEL_API_KEY`
+- **agent-browser**: Requires [agent-browser](https://github.com/anthropics/agent-browser) CLI
+- **voice-mlx**: Requires `edge-tts`, `ffplay`, `terminal-notifier`
 
 ## License
 
-[CC BY-NC 4.0](LICENSE) - You may share and adapt with attribution. Commercial use requires prior consent.
+[CC BY-NC 4.0](LICENSE) - Share and adapt with attribution. Commercial use requires prior consent.
