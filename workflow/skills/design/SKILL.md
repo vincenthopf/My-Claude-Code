@@ -51,13 +51,18 @@ Don't propose anything yet. Just explore.
 
 From the research, identify the candidate approaches — typically 2-4 viable options.
 
-**IMPORTANT: Use the workflow dispatch script, NOT a Claude sub-agent.** This runs on Codex X-High.
+**IMPORTANT: Use `dispatch.py` to send this to Codex, NOT a Claude sub-agent.** Use xhigh thinking for deep analytical comparison.
 
 ```bash
-python3 ~/.claude/skills/workflow-research/dispatch.py evaluate-approaches --cwd "$(pwd)"
+python3 ~/.claude/skills/workflow-research/dispatch.py \
+  --prompt "Your approach evaluation prompt — describe the candidates, what to compare, what tradeoffs matter" \
+  --output .building/design/approach-evaluation.md \
+  --cwd "$(pwd)" \
+  --thinking xhigh \
+  --context .building/problem-definition/definition.md ~/.claude/principles.md
 ```
 
-Run in background with `run_in_background: true` and `timeout: 600000`. The script automatically uses Codex with xhigh thinking, passes the problem definition and principles, and writes to `.building/design/approach-evaluation.md`.
+Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt tailored to the specific approaches being evaluated.
 
 The evaluator does not pick a winner. It presents the real decision — the core tradeoffs the user is choosing between.
 

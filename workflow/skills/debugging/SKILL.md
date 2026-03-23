@@ -35,13 +35,18 @@ RCA is problem definition for bugs. The same principle applies: understand the p
 Launch two agents in parallel to independently propose a fix based on the RCA findings:
 
 - **Opus agent** — Reads the root-cause report, the problem context, and the principles (`~/.claude/principles.md` + `.building/principles.md` if it exists). Proposes a fix with strong intent-understanding — focuses on what the code should do and why.
-- **Codex High agent** — **Use the workflow dispatch script, NOT a Claude sub-agent:**
+- **Codex High agent** — **Use `dispatch.py` to prompt Codex, NOT a Claude sub-agent:**
 
 ```bash
-python3 ~/.claude/skills/workflow-research/dispatch.py debug-proposal --cwd "$(pwd)"
+python3 ~/.claude/skills/workflow-research/dispatch.py \
+  --prompt "Your fix proposal prompt — describe the bug, the RCA findings, and what kind of fix to propose" \
+  --output .building/debugging/proposal-codex.md \
+  --cwd "$(pwd)" \
+  --thinking high \
+  --context .building/debugging/root-cause-analysis.md ~/.claude/principles.md
 ```
 
-Run in background with `run_in_background: true` and `timeout: 600000`. The script automatically uses Codex with high thinking, passes the RCA and principles, and writes to `.building/debugging/proposal-codex.md`. Proposes a fix independently — may take a different approach or surface different considerations.
+Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt based on the specific bug. Codex proposes a fix independently — may take a different approach or surface different considerations.
 
 Each writes a design proposal — what to change, where, and why this approach over alternatives. They do NOT implement. The proposal is a document, not a diff.
 
