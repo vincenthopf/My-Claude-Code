@@ -20,19 +20,18 @@ When the workflow calls for Codex (proposals, approach evaluation, debug proposa
 pi -p --no-session \
   --provider openai-codex --model gpt-5.4 \
   --thinking high \
-  --tools read,grep,find,ls \
-  "Your prompt here" > .building/output.md
+  --tools read,write,grep,find,ls \
+  "Read X, do Y, write your output to .building/output.md"
 ```
 
 - **Always run in background** (`run_in_background: true`, `timeout: 600000`)
 - `--thinking`: medium, high, or xhigh depending on task complexity
-- `--tools read,grep,find,ls`: read-only access (default for proposals)
+- `--tools read,write,grep,find,ls`: read + write access so Codex writes its own output
 - `--no-tools`: for pure reasoning without file access
 - `-p`: non-interactive, process and exit
 - `--no-session`: ephemeral, don't save session
-- Pipe stdout to file with `>`
 
-**Prompting Codex:** Codex has read tools. Tell it which files to read in the prompt: "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md, then propose a solution."
+**Prompting Codex:** Tell it which files to read AND where to write its output, all in the prompt. Codex has full tool access. Example: "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Propose a solution and write it to .building/planning/proposal-a.md."
 
 **When to use Codex vs Claude:**
 - Codex (via pi): proposal generation, approach evaluation, research validation, debug proposals

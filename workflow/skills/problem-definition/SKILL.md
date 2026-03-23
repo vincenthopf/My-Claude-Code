@@ -62,9 +62,8 @@ Use `/deep-research` with parallel tasks targeting:
 When research results come back, validate them using Codex X-High via pi:
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,grep,find,ls \
-  "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? What gaps exist? What's surface-level vs genuinely deep? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific queries." \
-  > .building/problem-definition/research-validation.md
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,write,grep,find,ls \
+  "Read the research output at [path/to/research-output.md]. Evaluate: does it answer the question? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP. Write your evaluation to .building/problem-definition/research-validation.md"
 ```
 
 Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps. Don't proceed with thin research on a problem that matters.

@@ -56,12 +56,11 @@ Orientation is not optional. A plan that doesn't account for what exists will pr
 Write a prompt for the specific problem, then dispatch it twice in parallel using the Bash tool with `run_in_background: true` and `timeout: 600000`:
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking high --tools read,grep,find,ls \
-  "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Then propose a solution..." \
-  > .building/planning/proposal-a.md
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking high --tools read,write,grep,find,ls \
+  "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Propose a solution and write it to .building/planning/proposal-a.md"
 ```
 
-Run the same prompt a second time piping to `proposal-b.md` to get an independent second proposal.
+Run the same prompt a second time telling Codex to write to `proposal-b.md` for an independent second proposal.
 
 **Always run in background** (`run_in_background: true`, `timeout: 600000`). Tell Codex which files to read by path in the prompt — it has read tools. Claude writes the prompt. Codex does the thinking.
 

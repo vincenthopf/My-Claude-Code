@@ -38,9 +38,8 @@ Launch two agents in parallel to independently propose a fix based on the RCA fi
 - **Codex High agent** — **Use pi to prompt Codex, NOT a Claude sub-agent:**
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking high --tools read,grep,find,ls \
-  "Read the root cause analysis at .building/debugging/root-cause-analysis.md and the principles at ~/.claude/principles.md. Propose a fix: what to change, where, why, risks, root cause vs symptom." \
-  > .building/debugging/proposal-codex.md
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking high --tools read,write,grep,find,ls \
+  "Read the root cause analysis at .building/debugging/root-cause-analysis.md and the principles at ~/.claude/principles.md. Propose a fix: what to change, where, why, risks, root cause vs symptom. Write your proposal to .building/debugging/proposal-codex.md"
 ```
 
 Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt based on the specific bug. Codex proposes a fix independently — may take a different approach or surface different considerations.

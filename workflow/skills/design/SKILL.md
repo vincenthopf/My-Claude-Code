@@ -46,9 +46,8 @@ Explore what's out there. This is not "find the answer" — it's "map the terrai
 Dispatch research to `/deep-research`. When results come back, validate them using Codex X-High via pi:
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,grep,find,ls \
-  "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific queries." \
-  > .building/design/research-validation.md
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,write,grep,find,ls \
+  "Read the research output at [path/to/research-output.md]. Evaluate: does it answer the question? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP. Write your evaluation to .building/design/research-validation.md"
 ```
 
 Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps.
@@ -62,9 +61,8 @@ From the research, identify the candidate approaches — typically 2-4 viable op
 **IMPORTANT: Use `pi` to send this to Codex, NOT a Claude sub-agent.** Use xhigh thinking for deep analytical comparison.
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,grep,find,ls \
-  "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Evaluate these candidate approaches: [describe candidates]..." \
-  > .building/design/approach-evaluation.md
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,write,grep,find,ls \
+  "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Evaluate these candidate approaches: [describe candidates]. Write your evaluation to .building/design/approach-evaluation.md"
 ```
 
 Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt tailored to the specific approaches being evaluated.
