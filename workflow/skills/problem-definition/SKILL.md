@@ -63,11 +63,10 @@ When research results come back, validate them using Codex X-High via `dispatch.
 
 ```bash
 python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Evaluate this research: does it actually answer the question? What gaps exist? What's surface-level vs genuinely deep? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific follow-up queries." \
+  --prompt "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? What gaps exist? What's surface-level vs genuinely deep? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific follow-up queries." \
   --output .building/problem-definition/research-validation.md \
   --cwd "$(pwd)" \
-  --thinking xhigh \
-  --context path/to/research-output.md
+  --thinking xhigh
 ```
 
 Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps. Don't proceed with thin research on a problem that matters.

@@ -57,14 +57,15 @@ Write a prompt for the specific problem, then dispatch it twice in parallel usin
 
 ```bash
 python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Your specific proposal prompt here — describe the problem, what you need proposed, and what format to use" \
+  --prompt "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. [Also read .building/design/design.md and .building/principles.md if they exist.] Then propose a solution: approach, concrete steps, decisions with reasoning, risks, and unresolved questions." \
   --output .building/planning/proposal-a.md \
   --cwd "$(pwd)" \
-  --thinking high \
-  --context .building/problem-definition/definition.md ~/.claude/principles.md
+  --thinking high
 ```
 
-Run the same prompt a second time with `--output .building/planning/proposal-b.md` to get an independent second proposal. Add `.building/design/design.md` and `.building/principles.md` to `--context` if they exist.
+Run the same prompt a second time with `--output .building/planning/proposal-b.md` to get an independent second proposal.
+
+**Prompting approach:** Tell Codex which files to read by path in the prompt — it has read tools and will access them directly. Don't pass large files via `--context`. Only use `--context` for small critical files if needed.
 
 **Always run dispatch.py in the background** (`run_in_background: true`, `timeout: 600000`). Claude writes the prompt. Codex does the thinking. The prompt should be specific to the actual problem — not a generic template.
 

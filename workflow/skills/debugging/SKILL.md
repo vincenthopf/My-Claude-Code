@@ -39,11 +39,10 @@ Launch two agents in parallel to independently propose a fix based on the RCA fi
 
 ```bash
 python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Your fix proposal prompt — describe the bug, the RCA findings, and what kind of fix to propose" \
+  --prompt "Read the root cause analysis at .building/debugging/root-cause-analysis.md and the principles at ~/.claude/principles.md. Based on the RCA findings, propose a fix: what to change, where, why this approach, risks, and whether it addresses root cause or just symptom." \
   --output .building/debugging/proposal-codex.md \
   --cwd "$(pwd)" \
-  --thinking high \
-  --context .building/debugging/root-cause-analysis.md ~/.claude/principles.md
+  --thinking high
 ```
 
 Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt based on the specific bug. Codex proposes a fix independently — may take a different approach or surface different considerations.

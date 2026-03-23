@@ -47,11 +47,10 @@ Dispatch research to `/deep-research`. When results come back, validate them usi
 
 ```bash
 python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Evaluate this research for the design phase. Does it cover the solution space adequately? Are candidate approaches well-represented? What's missing?" \
+  --prompt "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? Does it cover the solution space adequately? Are candidate approaches well-represented? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific queries." \
   --output .building/design/research-validation.md \
   --cwd "$(pwd)" \
-  --thinking xhigh \
-  --context path/to/research-output.md
+  --thinking xhigh
 ```
 
 Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps.
@@ -66,11 +65,10 @@ From the research, identify the candidate approaches — typically 2-4 viable op
 
 ```bash
 python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Your approach evaluation prompt — describe the candidates, what to compare, what tradeoffs matter" \
+  --prompt "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Evaluate these candidate approaches: [describe candidates]. For each: what it optimizes for, where it breaks, who uses it in production, what it sacrifices, how it aligns with the principles. Do NOT pick a winner — present the real tradeoffs." \
   --output .building/design/approach-evaluation.md \
   --cwd "$(pwd)" \
-  --thinking xhigh \
-  --context .building/problem-definition/definition.md ~/.claude/principles.md
+  --thinking xhigh
 ```
 
 Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt tailored to the specific approaches being evaluated.

@@ -32,6 +32,8 @@ python3 ~/.claude/skills/workflow-research/dispatch.py \
 - `--allow-missing-context`: skip missing context files instead of failing
 - Codex response is written to `--output`. Read the file when the task completes.
 
+**Prompting Codex:** Codex has full read tools (`read`, `grep`, `find`, `ls`). Instead of passing large files via `--context`, reference them by path in the prompt and let Codex read them itself. Use `--context` only for small, critical files like `~/.claude/principles.md`. For everything else, write it into the prompt: "Read `.building/problem-definition/definition.md` and the research at `.building/design/research.md`, then evaluate..."
+
 **When to use Codex vs Claude:**
 - Codex (via dispatch.py): proposal generation, approach evaluation, research validation, debug proposals
 - Claude (via Agent tool): synthesis, alignment checks, verification, implementation, RCA

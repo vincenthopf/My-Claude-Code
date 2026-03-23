@@ -3,13 +3,15 @@
 dispatch.py — Send prompts to Codex via pi.
 
 Claude writes the prompt. This script sends it to Codex and writes the response
-to a file. That's it.
+to a file. Codex has read tools and can access the codebase — reference files
+by path in the prompt instead of passing them as context.
 
 Usage:
     python3 dispatch.py --prompt "Your prompt here" --output result.md --cwd /path/to/project
     python3 dispatch.py --prompt "Deep analysis" --output result.md --cwd . --thinking xhigh
     python3 dispatch.py --prompt-file prompt.txt --output result.md --cwd . --thinking high
     python3 dispatch.py --prompt "Quick check" --output result.md --cwd . --no-tools
+    python3 dispatch.py --prompt "Read ~/.claude/principles.md and evaluate..." --output result.md --cwd .
 """
 
 import argparse
@@ -28,6 +30,8 @@ RED = "\033[31m"
 YELLOW = "\033[33m"
 RESET = "\033[0m"
 
+HEARTBEAT_INTERVAL = 30  # seconds between heartbeat messages
+
 
 def log(msg, style=""):
     ts = datetime.now().strftime("%H:%M:%S")
@@ -39,6 +43,15 @@ def drain_stderr(proc, stderr_lines):
     """Read stderr in a background thread to prevent deadlock."""
     for line in proc.stderr:
         stderr_lines.append(line)
+
+
+def heartbeat(start_time, alive_flag):
+    """Print periodic heartbeat to stderr so caller knows we're alive."""
+    while alive_flag.is_set():
+        elapsed = time.time() - start_time
+        if elapsed > HEARTBEAT_INTERVAL:
+            log(f"  Still running... {elapsed:.0f}s elapsed", DIM)
+        alive_flag.wait(HEARTBEAT_INTERVAL)
 
 
 def run(args):
@@ -86,7 +99,9 @@ def run(args):
     if args.system_prompt:
         cmd += ["--system-prompt", args.system_prompt]
 
-    # Add context files — fail on missing unless --allow-missing-context
+    # Context files — passed to pi as @file references for small, critical files
+    # For large context, prefer mentioning file paths in the prompt and letting
+    # Codex read them with its tools instead
     if args.context:
         for f in args.context:
             resolved = os.path.expanduser(f)
@@ -115,11 +130,11 @@ def run(args):
     log("")
 
     start_time = time.time()
-    # Track per-turn text — only keep the last turn's text as the final answer
     current_turn_text = []
     all_turns_text = []
     turn_count = 0
     tool_count = 0
+    last_activity = time.time()
     agent_usage = {}
 
     proc = subprocess.Popen(
@@ -138,8 +153,16 @@ def run(args):
     stderr_thread.daemon = True
     stderr_thread.start()
 
+    # Heartbeat thread so caller knows we're alive
+    alive_flag = threading.Event()
+    alive_flag.set()
+    heartbeat_thread = threading.Thread(target=heartbeat, args=(start_time, alive_flag))
+    heartbeat_thread.daemon = True
+    heartbeat_thread.start()
+
     try:
         for line in proc.stdout:
+            last_activity = time.time()
             line = line.strip()
             if not line:
                 continue
@@ -151,7 +174,6 @@ def run(args):
             etype = event.get("type", "")
 
             if etype == "turn_start":
-                # Save previous turn's text and start fresh
                 if current_turn_text:
                     all_turns_text.append("".join(current_turn_text))
                 current_turn_text = []
@@ -180,7 +202,6 @@ def run(args):
                     log(f"  Responding...", GREEN)
 
             elif etype == "message_end":
-                # Capture usage from message_end if available
                 msg = event.get("message", {})
                 usage = msg.get("usage", {})
                 if usage:
@@ -191,7 +212,6 @@ def run(args):
                     }
 
             elif etype == "agent_end":
-                # Also try agent_end for usage
                 messages = event.get("messages", [])
                 if messages and not agent_usage:
                     last_msg = messages[-1] if isinstance(messages, list) else {}
@@ -211,6 +231,8 @@ def run(args):
         proc.kill()
         log("Interrupted", RED)
         sys.exit(130)
+    finally:
+        alive_flag.clear()
 
     proc.wait()
     stderr_thread.join(timeout=5)
@@ -229,7 +251,6 @@ def run(args):
             log(f"stderr tail:", RED)
             for line in stderr_lines[-10:]:
                 log(f"  {line.rstrip()}", RED)
-        # Don't write partial/empty output on failure
         sys.exit(proc.returncode)
 
     if not final_text.strip():
@@ -266,7 +287,9 @@ def main():
     tools_group.add_argument("--tools", help="Override tools (default: read,grep,find,ls)")
     tools_group.add_argument("--no-tools", action="store_true", help="Disable all tools")
 
-    parser.add_argument("--context", "-c", nargs="+", help="Context files to include")
+    parser.add_argument("--context", "-c", nargs="+",
+                        help="Small context files to inline. For large files, mention paths "
+                             "in the prompt and let Codex read them with its tools instead.")
     parser.add_argument("--allow-missing-context", action="store_true",
                         help="Skip missing context files instead of failing")
     parser.add_argument("--system-prompt", "-s", help="Custom system prompt")
