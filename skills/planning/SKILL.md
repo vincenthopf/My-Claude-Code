@@ -1,0 +1,138 @@
+---
+name: planning
+description: >
+  Turn a defined problem and chosen direction into a concrete proposal.
+  Two Codex agents propose independently, Opus synthesizes the best parts,
+  user approves. Use after problem definition (and design, if applicable),
+  before implementation.
+---
+
+# Planning
+
+The problem is defined. The direction is chosen. Now produce a concrete proposal for how to build it — and make sure it's good before anyone writes code.
+
+Planning uses competitive proposal generation: two independent agents propose solutions, a synthesis agent picks the best parts and justifies every choice, and the user approves before anything moves forward. This pattern reduces anchoring bias and produces stronger proposals than any single agent would.
+
+---
+
+## When to Use This
+
+- After `/problem-definition` has produced a confirmed definition
+- After `/design` has chosen a direction (if applicable — skip design for bounded problems)
+- When the user says "let's plan this" or "how should we approach this"
+- When resuming work and a plan needs to be created or revised
+
+---
+
+## The Process
+
+### Step 1: Receive the Inputs
+
+Read everything that came before:
+
+- `.building/problem-definition/definition.md` and supporting files
+- `.building/design/design.md` (if design phase was done)
+- `~/.claude/principles.md` (global principles)
+- `.building/principles.md` (project principles, if they exist)
+
+Read the definition and design artifacts carefully. Then do a read-back — restate the problem and chosen direction to the user. Catch misalignment before it compounds.
+
+If artifacts are missing or incomplete, tell the user. Don't infer what the problem is.
+
+### Step 2: Orient
+
+Before generating proposals, understand what you're working with:
+
+1. **Check for existing plans** — Look in `.building/planning/` for prior plans. If one exists, understand what was planned before.
+2. **Check the codebase** — Understand the current state of the code this plan will affect. Don't plan changes to code you haven't read.
+3. **Check learnings** — Search for confirmed knowledge relevant to this problem.
+
+Orientation is not optional. A plan that doesn't account for what exists will propose building things already built.
+
+### Step 3: Generate Proposals
+
+Dispatch two Codex High agents in parallel via pi. Each independently proposes how to solve the defined problem in the chosen direction.
+
+Each agent receives:
+- The problem definition
+- The design direction (if applicable)
+- The global and project principles
+- Relevant codebase context from orientation
+
+Each agent produces a proposal covering:
+- **Approach** — The strategy. How does this solve the problem?
+- **Steps** — Concrete, ordered steps. Specific enough that an implementation agent could follow the direction without guessing.
+- **Decisions** — Choices made and why. What was considered and rejected.
+- **Risks** — What could go wrong. What we're uncertain about.
+- **Unresolved questions** — Things the agent couldn't determine.
+
+The two agents work independently — they don't see each other's output.
+
+**Dispatch pattern:** Use the pi-agent skill to run two parallel background tasks:
+- Proposal A → output to `.building/planning/proposal-a.md`
+- Proposal B → output to `.building/planning/proposal-b.md`
+- Provider: `openai-codex`, Model: `gpt-5.4`, Thinking: `high`
+- Tools: `read,grep,find,ls` (read-only — proposals don't modify the codebase)
+- Context: pass the problem definition, design artifact, and principles as `--context` files
+- CWD: the project root
+
+### Step 4: Synthesize
+
+Dispatch the `proposal-synthesizer` agent (Opus). It reads both proposals, the problem definition, and the principles. It produces one coherent proposal by picking the best parts of each and justifying every choice.
+
+The synthesis is not a merge — it's a judgment call. Parts must fit together as a unified approach. Coherence wins over cherry-picking.
+
+Write the synthesized proposal to `.building/planning/proposal.md`.
+
+### Step 5: Alignment Check
+
+The synthesized proposal gets checked — one pass, two dimensions:
+
+1. **Problem fit** — Does this proposal actually solve the defined problem? All of it? Does it address anything that wasn't in the problem definition (scope creep)?
+2. **Principles alignment** — Does this proposal honour the global and project principles? Where does it compromise? Where were principles silent and the agent made a call the user didn't guide?
+
+If alignment surfaces issues, refine the proposal — send feedback to the Codex agents for revision if needed, re-synthesize, re-check. This is a loop. The cost of iterating on a proposal is minutes. The cost of building wrong is days.
+
+### Step 6: Risk Assessment
+
+Once aligned, assess whether the proposal can be implemented reliably:
+
+- **Audit risk** — Can we reliably research and verify this change? Is the surface area manageable?
+- **Alignment risk** — Can we check direction during and after implementation? Will we know if it drifts?
+
+If either risk is too high, the proposal needs to be broken into smaller pieces. Decomposition is driven by risk, not complexity.
+
+### Step 7: Present to User
+
+Present the synthesized, aligned proposal to the user. Include:
+- The approach in plain language
+- Key decisions and why (including what was picked from which Codex proposal)
+- Risks and how they'll be managed
+- Scope boundaries
+- Unresolved questions that need the user's input
+
+**Wait for the user's approval.** Nothing moves forward without it. If the user wants changes, go back to the appropriate step.
+
+The proposal is a compass, not a contract. Implementation agents will have latitude to make tactical decisions. If they discover the proposal is wrong about something, they should flag it — not build the wrong thing.
+
+### Step 8: Reframing Trigger
+
+If at any point during planning you discover the problem definition is wrong — the problem is different from what was defined, the direction should be fundamentally different — stop planning. Tell the user. Go back to problem definition or design.
+
+Don't fix a bad problem definition by adjusting the plan.
+
+---
+
+## What a Plan Is Not
+
+- Not a spec. Implementation agents use it as direction, not as a document to conform to.
+- Not a contract. It can change as we learn during implementation. But changes should be conscious, not drift.
+- Not a decomposition into sub-specs. The proposal stays as one document. Implementation agents get assigned domain scope, not handed sub-documents.
+
+---
+
+## Connection to Other Workflows
+
+Planning receives the definition from **problem definition** and the direction from **design**. It produces a proposal that **implementation** uses as a compass. For bugs, **debugging** has its own proposal pipeline (one Opus + one Codex agent).
+
+All artifacts are written to `.building/planning/`. Implementation reads from here to understand the direction.
