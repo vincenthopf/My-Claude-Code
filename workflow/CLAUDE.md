@@ -21,22 +21,19 @@ python3 ~/.claude/skills/workflow-research/dispatch.py \
   --prompt "Your prompt here" \
   --output .building/output.md \
   --cwd "$(pwd)" \
-  --thinking high \
-  --context file1.md file2.md
+  --thinking high
 ```
 
 - **Always run in background** (`run_in_background: true`, `timeout: 600000`)
 - `--thinking`: medium, high, or xhigh depending on task complexity
-- `--context`: pass problem definitions, principles, and relevant artifacts
 - `--no-tools`: for pure reasoning without file access
-- `--allow-missing-context`: skip missing context files instead of failing
 - Codex response is written to `--output`. Read the file when the task completes.
-
-**Prompting Codex:** Codex has full read tools (`read`, `grep`, `find`, `ls`). Instead of passing large files via `--context`, reference them by path in the prompt and let Codex read them itself. Use `--context` only for small, critical files like `~/.claude/principles.md`. For everything else, write it into the prompt: "Read `.building/problem-definition/definition.md` and the research at `.building/design/research.md`, then evaluate..."
 
 **When to use Codex vs Claude:**
 - Codex (via dispatch.py): proposal generation, approach evaluation, research validation, debug proposals
 - Claude (via Agent tool): synthesis, alignment checks, verification, implementation, RCA
+
+**Prompting Codex:** Codex has full read tools (read, grep, find, ls). Tell it which files to read in the prompt — don't try to pass file contents through CLI args. Example: "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md, then propose a solution."
 
 ## Context Awareness
 
