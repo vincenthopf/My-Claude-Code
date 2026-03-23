@@ -66,7 +66,7 @@ python3 ~/.claude/skills/workflow-research/dispatch.py \
 
 Run the same prompt a second time with `--output .building/planning/proposal-b.md` to get an independent second proposal. Add `.building/design/design.md` and `.building/principles.md` to `--context` if they exist.
 
-Claude writes the prompt. Codex does the thinking. The prompt should be specific to the actual problem — not a generic template.
+**Always run dispatch.py in the background** (`run_in_background: true`, `timeout: 600000`). Claude writes the prompt. Codex does the thinking. The prompt should be specific to the actual problem — not a generic template.
 
 Each agent produces a proposal covering:
 - **Approach** — The strategy. How does this solve the problem?

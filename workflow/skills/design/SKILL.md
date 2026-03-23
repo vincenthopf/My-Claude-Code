@@ -43,7 +43,18 @@ Explore what's out there. This is not "find the answer" — it's "map the terrai
 - What tools, frameworks, or libraries could apply?
 - What's the build-vs-buy landscape?
 
-Dispatch research to deep-research. When results come back, send them to the `research-validator` agent (Codex X-High) to evaluate quality and identify gaps. If the validator says the research needs follow-up, dispatch targeted queries to fill the gaps.
+Dispatch research to `/deep-research`. When results come back, validate them using Codex X-High via `dispatch.py`:
+
+```bash
+python3 ~/.claude/skills/workflow-research/dispatch.py \
+  --prompt "Evaluate this research for the design phase. Does it cover the solution space adequately? Are candidate approaches well-represented? What's missing?" \
+  --output .building/design/research-validation.md \
+  --cwd "$(pwd)" \
+  --thinking xhigh \
+  --context path/to/research-output.md
+```
+
+Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps.
 
 Don't propose anything yet. Just explore.
 

@@ -59,7 +59,18 @@ Use `/deep-research` with parallel tasks targeting:
 - **Adjacent solutions** — Projects that solve a related problem and could be adapted
 - **Prior art in this codebase** — Check git history, plan files, learnings, and project memories for previous attempts
 
-When research results come back, dispatch the `research-validator` agent (Codex X-High) to evaluate quality and identify gaps. If the validator says the research needs follow-up, dispatch targeted queries to fill the gaps. Don't proceed with thin research on a problem that matters.
+When research results come back, validate them using Codex X-High via `dispatch.py`:
+
+```bash
+python3 ~/.claude/skills/workflow-research/dispatch.py \
+  --prompt "Evaluate this research: does it actually answer the question? What gaps exist? What's surface-level vs genuinely deep? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific follow-up queries." \
+  --output .building/problem-definition/research-validation.md \
+  --cwd "$(pwd)" \
+  --thinking xhigh \
+  --context path/to/research-output.md
+```
+
+Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps. Don't proceed with thin research on a problem that matters.
 
 If something exists that solves 80% of the problem, building from scratch is waste. If nothing exists, that's also a valuable finding — it tells us we're in genuinely new territory and should proceed with proportional care.
 
