@@ -59,14 +59,12 @@ Use `/deep-research` with parallel tasks targeting:
 - **Adjacent solutions** — Projects that solve a related problem and could be adapted
 - **Prior art in this codebase** — Check git history, plan files, learnings, and project memories for previous attempts
 
-When research results come back, validate them using Codex X-High via `dispatch.py`:
+When research results come back, validate them using Codex X-High via pi:
 
 ```bash
-python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? What gaps exist? What's surface-level vs genuinely deep? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific follow-up queries." \
-  --output .building/problem-definition/research-validation.md \
-  --cwd "$(pwd)" \
-  --thinking xhigh
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,grep,find,ls \
+  "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? What gaps exist? What's surface-level vs genuinely deep? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific queries." \
+  > .building/problem-definition/research-validation.md
 ```
 
 Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps. Don't proceed with thin research on a problem that matters.

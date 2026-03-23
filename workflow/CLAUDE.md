@@ -14,26 +14,29 @@ All decisions, proposals, and code are governed by `~/.claude/principles.md`. Re
 
 ## Codex Dispatch
 
-When the workflow calls for Codex (proposals, approach evaluation, debug proposals), use `dispatch.py` — NOT Claude sub-agents. Claude writes the prompt, dispatch.py sends it to Codex, the response lands in a file.
+When the workflow calls for Codex (proposals, approach evaluation, debug proposals), use `pi` directly — NOT Claude sub-agents. Claude writes the prompt, pi sends it to Codex, pipe the output to a file.
 
 ```bash
-python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Your prompt here" \
-  --output .building/output.md \
-  --cwd "$(pwd)" \
-  --thinking high
+pi -p --no-session \
+  --provider openai-codex --model gpt-5.4 \
+  --thinking high \
+  --tools read,grep,find,ls \
+  "Your prompt here" > .building/output.md
 ```
 
 - **Always run in background** (`run_in_background: true`, `timeout: 600000`)
 - `--thinking`: medium, high, or xhigh depending on task complexity
+- `--tools read,grep,find,ls`: read-only access (default for proposals)
 - `--no-tools`: for pure reasoning without file access
-- Codex response is written to `--output`. Read the file when the task completes.
+- `-p`: non-interactive, process and exit
+- `--no-session`: ephemeral, don't save session
+- Pipe stdout to file with `>`
+
+**Prompting Codex:** Codex has read tools. Tell it which files to read in the prompt: "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md, then propose a solution."
 
 **When to use Codex vs Claude:**
-- Codex (via dispatch.py): proposal generation, approach evaluation, research validation, debug proposals
+- Codex (via pi): proposal generation, approach evaluation, research validation, debug proposals
 - Claude (via Agent tool): synthesis, alignment checks, verification, implementation, RCA
-
-**Prompting Codex:** Codex has full read tools (read, grep, find, ls). Tell it which files to read in the prompt — don't try to pass file contents through CLI args. Example: "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md, then propose a solution."
 
 ## Context Awareness
 

@@ -43,14 +43,12 @@ Explore what's out there. This is not "find the answer" — it's "map the terrai
 - What tools, frameworks, or libraries could apply?
 - What's the build-vs-buy landscape?
 
-Dispatch research to `/deep-research`. When results come back, validate them using Codex X-High via `dispatch.py`:
+Dispatch research to `/deep-research`. When results come back, validate them using Codex X-High via pi:
 
 ```bash
-python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? Does it cover the solution space adequately? Are candidate approaches well-represented? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific queries." \
-  --output .building/design/research-validation.md \
-  --cwd "$(pwd)" \
-  --thinking xhigh
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,grep,find,ls \
+  "Read the research output at [path/to/research-output.md]. Evaluate: does it actually answer the question? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP with specific queries." \
+  > .building/design/research-validation.md
 ```
 
 Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps.
@@ -61,14 +59,12 @@ Don't propose anything yet. Just explore.
 
 From the research, identify the candidate approaches — typically 2-4 viable options.
 
-**IMPORTANT: Use `dispatch.py` to send this to Codex, NOT a Claude sub-agent.** Use xhigh thinking for deep analytical comparison.
+**IMPORTANT: Use `pi` to send this to Codex, NOT a Claude sub-agent.** Use xhigh thinking for deep analytical comparison.
 
 ```bash
-python3 ~/.claude/skills/workflow-research/dispatch.py \
-  --prompt "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Evaluate these candidate approaches: [describe candidates]. For each: what it optimizes for, where it breaks, who uses it in production, what it sacrifices, how it aligns with the principles. Do NOT pick a winner — present the real tradeoffs." \
-  --output .building/design/approach-evaluation.md \
-  --cwd "$(pwd)" \
-  --thinking xhigh
+pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,grep,find,ls \
+  "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Evaluate these candidate approaches: [describe candidates]..." \
+  > .building/design/approach-evaluation.md
 ```
 
 Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt tailored to the specific approaches being evaluated.
