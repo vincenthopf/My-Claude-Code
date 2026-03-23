@@ -51,20 +51,13 @@ Don't propose anything yet. Just explore.
 
 From the research, identify the candidate approaches — typically 2-4 viable options.
 
-**IMPORTANT: Use pi dispatch for approach evaluation, NOT a Claude sub-agent.** This runs on Codex X-High, not Claude.
+**IMPORTANT: Use the workflow dispatch script, NOT a Claude sub-agent.** This runs on Codex X-High.
 
 ```bash
-python3 ~/.claude/skills/pi-agent/scripts/pi-run.py \
-  --prompt "[approach evaluation prompt — see codex-dispatch.md]" \
-  --output .building/design/approach-evaluation.md \
-  --provider openai-codex --model gpt-5.4 \
-  --thinking xhigh \
-  --tools read,grep,find,ls \
-  --cwd "$(pwd)" \
-  --context .building/problem-definition/definition.md ~/.claude/principles.md
+python3 ~/.claude/skills/workflow-research/dispatch.py evaluate-approaches --cwd "$(pwd)"
 ```
 
-Run in background with `run_in_background: true` and `timeout: 600000`. Full dispatch patterns at `~/.claude/skills/workflow-research/codex-dispatch.md`.
+Run in background with `run_in_background: true` and `timeout: 600000`. The script automatically uses Codex with xhigh thinking, passes the problem definition and principles, and writes to `.building/design/approach-evaluation.md`.
 
 The evaluator does not pick a winner. It presents the real decision — the core tradeoffs the user is choosing between.
 
