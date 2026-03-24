@@ -17,7 +17,7 @@ All decisions, proposals, and code are governed by `~/.claude/principles.md`. Re
 When the workflow calls for Codex (proposals, approach evaluation, debug proposals), use `pi` directly — NOT Claude sub-agents. Claude writes the prompt, pi sends it to Codex, pipe the output to a file.
 
 ```bash
-pi -p --no-session \
+bash ~/.claude/pi-watch.sh -p --no-session \
   --provider openai-codex --model gpt-5.4 \
   --thinking high \
   --tools read,write,grep,find,ls \
@@ -30,6 +30,7 @@ pi -p --no-session \
 - `--no-tools`: for pure reasoning without file access
 - `-p`: non-interactive, process and exit
 - `--no-session`: ephemeral, don't save session
+- `pi-watch.sh` wraps pi with live progress — shows tool calls and token usage as Codex works
 
 **Prompting Codex:** Tell it which files to read AND where to write its output, all in the prompt. Codex has full tool access. Example: "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Propose a solution and write it to .building/planning/proposal-a.md."
 
