@@ -53,20 +53,25 @@ This isn't a rigid taxonomy — it's a diagnostic question. "What kind of thinki
 
 Before committing to build, search for whether this problem has already been solved. This is the cheapest intervention in the entire workflow — research that finds an existing solution saves weeks of implementation.
 
+**DO NOT use Claude sub-agents with WebSearch for research. Use the `/deep-research` skill — it exists for this exact purpose and produces better results.**
+
 Use `/deep-research` with parallel tasks targeting:
 
 - **Direct solutions** — Open-source projects, libraries, or tools that solve this exact problem
 - **Adjacent solutions** — Projects that solve a related problem and could be adapted
 - **Prior art in this codebase** — Check git history, plan files, learnings, and project memories for previous attempts
 
-When research results come back, validate them using Codex X-High via pi:
+When research results come back, validate them using Codex X-High:
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,write,grep,find,ls \
+bash ~/.claude/pi-watch.sh -p --no-session \
+  --provider openai-codex --model gpt-5.4 \
+  --thinking xhigh \
+  --tools read,write,grep,find,ls \
   "Read the research output at [path/to/research-output.md]. Evaluate: does it answer the question? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP. Write your evaluation to .building/problem-definition/research-validation.md"
 ```
 
-Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps. Don't proceed with thin research on a problem that matters.
+Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch more `/deep-research` to fill the gaps — NOT sub-agents with web search. Don't proceed with thin research on a problem that matters.
 
 If something exists that solves 80% of the problem, building from scratch is waste. If nothing exists, that's also a valuable finding — it tells us we're in genuinely new territory and should proceed with proportional care.
 

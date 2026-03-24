@@ -35,10 +35,13 @@ RCA is problem definition for bugs. The same principle applies: understand the p
 Launch two agents in parallel to independently propose a fix based on the RCA findings:
 
 - **Opus agent** — Reads the root-cause report, the problem context, and the principles (`~/.claude/principles.md` + `.building/principles.md` if it exists). Proposes a fix with strong intent-understanding — focuses on what the code should do and why.
-- **Codex High agent** — **Use pi to prompt Codex, NOT a Claude sub-agent:**
+- **Codex High agent** — **Use pi-watch.sh to prompt Codex, NOT a Claude sub-agent:**
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking high --tools read,write,grep,find,ls \
+bash ~/.claude/pi-watch.sh -p --no-session \
+  --provider openai-codex --model gpt-5.4 \
+  --thinking high \
+  --tools read,write,grep,find,ls \
   "Read the root cause analysis at .building/debugging/root-cause-analysis.md and the principles at ~/.claude/principles.md. Propose a fix: what to change, where, why, risks, root cause vs symptom. Write your proposal to .building/debugging/proposal-codex.md"
 ```
 

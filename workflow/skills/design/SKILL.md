@@ -43,14 +43,19 @@ Explore what's out there. This is not "find the answer" — it's "map the terrai
 - What tools, frameworks, or libraries could apply?
 - What's the build-vs-buy landscape?
 
-Dispatch research to `/deep-research`. When results come back, validate them using Codex X-High via pi:
+**DO NOT use Claude sub-agents with WebSearch for research. Use the `/deep-research` skill — it exists for this exact purpose and produces better results.**
+
+Dispatch research via `/deep-research`. When results come back, validate them using Codex X-High:
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,write,grep,find,ls \
+bash ~/.claude/pi-watch.sh -p --no-session \
+  --provider openai-codex --model gpt-5.4 \
+  --thinking xhigh \
+  --tools read,write,grep,find,ls \
   "Read the research output at [path/to/research-output.md]. Evaluate: does it answer the question? What gaps exist? Verdict: SUFFICIENT or NEEDS FOLLOW-UP. Write your evaluation to .building/design/research-validation.md"
 ```
 
-Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch targeted research to fill the gaps.
+Run in background (`run_in_background: true`, `timeout: 600000`). If the validator says NEEDS FOLLOW-UP, dispatch more `/deep-research` — NOT sub-agents with web search.
 
 Don't propose anything yet. Just explore.
 
@@ -58,14 +63,17 @@ Don't propose anything yet. Just explore.
 
 From the research, identify the candidate approaches — typically 2-4 viable options.
 
-**IMPORTANT: Use `pi` to send this to Codex, NOT a Claude sub-agent.** Use xhigh thinking for deep analytical comparison.
+**Use pi-watch.sh to send this to Codex, NOT a Claude sub-agent.**
 
 ```bash
-pi -p --no-session --provider openai-codex --model gpt-5.4 --thinking xhigh --tools read,write,grep,find,ls \
+bash ~/.claude/pi-watch.sh -p --no-session \
+  --provider openai-codex --model gpt-5.4 \
+  --thinking xhigh \
+  --tools read,write,grep,find,ls \
   "Read the problem definition at .building/problem-definition/definition.md and the principles at ~/.claude/principles.md. Evaluate these candidate approaches: [describe candidates]. Write your evaluation to .building/design/approach-evaluation.md"
 ```
 
-Run in background with `run_in_background: true` and `timeout: 600000`. Claude writes the prompt tailored to the specific approaches being evaluated.
+Run in background (`run_in_background: true`, `timeout: 600000`). Claude writes the prompt tailored to the specific approaches.
 
 The evaluator does not pick a winner. It presents the real decision — the core tradeoffs the user is choosing between.
 

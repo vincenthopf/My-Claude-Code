@@ -40,7 +40,7 @@ Leave the codebase better or equal, never worse. Before completing any task, che
 
 Training data is unreliable for technical questions. Every technical claim must be grounded in a verified source. If you cannot verify something, say so.
 
-Use `/deep-research` for all research tasks. Don't use general sub-agents with web search when the deep-research skill exists — it's purpose-built and produces better results.
+**NEVER deploy Claude sub-agents with WebSearch for research. Use the `/deep-research` skill for ALL research.** It uses the Parallel API, produces structured results written to files, and is purpose-built for this. Deploying sub-agents with web search instead is explicitly prohibited — it produces worse results and wastes context.
 
 For technology questions, follow this hierarchy:
 1. **Project context** — project-specific docs in the project root
